@@ -18,8 +18,9 @@ class TestLogistic extends TestBase {
         info(format_vec(sol))
 
         val solver = new SimpleCG(A, b)
-        solver.solve()
+        solver.solve(n + 10)
+        info("CG value = ")
         info(format_vec(solver.coef))
-        info("# of iterations: " + solver.niter)
+        info("# of iterations = " + solver.niter)
     }
 }
