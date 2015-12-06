@@ -10,9 +10,9 @@ class TestBasicSpline extends TestBase {
     val (x, y) = read_data(f)
 
     test("Basic Spline") {
-        val mod = new BasicSpline(x, y, 0.001)
+        val mod = new BasicSpline(x, y)
         mod.set_opts(-1, 1e-3)
-        mod.fit()
+        mod.fit(0.001)
         info("Coefficients = ")
         info(format_vec(mod.coef))
         info("Predicted values = ")

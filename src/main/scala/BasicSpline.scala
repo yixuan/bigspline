@@ -4,27 +4,22 @@ import breeze.linalg._
 import breeze.numerics._
 import scala.util.control._
 
-
-class BasicSpline(val dat_x: DenseMatrix[Double],
-                  val dat_y: DenseVector[Double],
-                  val lambda: Double) extends CGUpdater {
-    private val dim_n = dat_x.rows
-    private val dim_p = dat_x.cols
-    private val dim_m = 1 + dim_p
-
-    private def k1(x: Double) = x - 0.5
-    private def k2(x: Double): Double = {
+object BasicSpline {
+    // Bernoulli polynomials
+    def k1(x: Double) = x - 0.5
+    def k2(x: Double): Double = {
         val k1x = k1(x)
         return 0.5 * (k1x * k1x - 1.0 / 12)
     }
-    private def k4(x: Double): Double = {
+    def k4(x: Double): Double = {
         val k1x = k1(x)
         val k1xsq = k1x * k1x
         return (k1xsq * k1xsq - k1xsq * 0.5 + 7.0 / 240) / 24
     }
-    private def Rkernel(x: Double, y: Double) = k2(x) * k2(y) - k4(math.abs(x - y))
-    private def Rkernel(x: DenseVector[Double], y: DenseVector[Double],
-                        weights: DenseVector[Double]): Double = {
+
+    // Kernels
+    def Rkernel(x: Double, y: Double) = k2(x) * k2(y) - k4(math.abs(x - y))
+    def Rkernel(x: DenseVector[Double], y: DenseVector[Double], weights: DenseVector[Double]): Double = {
         val len = x.length
         val res = DenseVector.zeros[Double](len)
         for (i <- 0 until len) {
@@ -32,20 +27,36 @@ class BasicSpline(val dat_x: DenseMatrix[Double],
         }
         return res.dot(weights)
     }
+}
 
+class BasicSpline(val dat_x: DenseMatrix[Double],
+                  val dat_y: DenseVector[Double]) extends CGUpdater {
+    // Trigger static block
+    BasicSpline
+
+    // Dimensions
+    private val dim_n = dat_x.rows
+    private val dim_p = dat_x.cols
+    private val dim_m = 1 + dim_p
+
+    // Estimate weights for the kernels
     private def estimate_theta(): DenseVector[Double] = {
         val theta = DenseVector.zeros[Double](dim_p)
         for (i <- 0 until dim_p) {
-            theta(i) = 1.0 / sum(dat_x(::, i).map(x => Rkernel(x, x)))
+            theta(i) = 1.0 / sum(dat_x(::, i).map(x => BasicSpline.Rkernel(x, x)))
         }
         return theta
     }
 
+    // Estimated theta
     val theta = estimate_theta()
 
-    private def Rkernel(x: DenseVector[Double],
-                        y: DenseVector[Double]): Double = {
-        return Rkernel(x, y, theta)
+    // Penalty parameter
+    var lambda = 0.0
+
+    // Use the estimated theta to calculate kernel
+    private def Rkernel(x: DenseVector[Double], y: DenseVector[Double]): Double = {
+        return BasicSpline.Rkernel(x, y, theta)
     }
 
     // S = (1, x1, x2, ..., x_p)
@@ -88,7 +99,7 @@ class BasicSpline(val dat_x: DenseMatrix[Double],
 
     val solver = new ConjugateGradient(this, dim_m + dim_n)
     var maxit = -1
-    var eps = 0.0
+    var eps = 1e-6
 
     def set_opts(maxit: Int = -1, eps: Double = 1e-6) {
         this.maxit = maxit
@@ -96,7 +107,8 @@ class BasicSpline(val dat_x: DenseMatrix[Double],
         solver.set_opts(maxit, eps)
     }
 
-    def fit() {
+    def fit(lambda: Double) {
+        this.lambda = lambda
         solver.solve(Tty)
     }
 
