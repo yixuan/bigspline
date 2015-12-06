@@ -84,4 +84,11 @@ class BasicSpline(val dat_x: DenseMatrix[Double],
     }
 
     def coef = solver.coef
+    def niter = solver.niter
+    def pred: DenseVector[Double] = {
+        val cd = solver.coef
+        val d = cd(0 until dim_m)
+        val c = cd(dim_m to -1)
+        return S * d + Q * c
+    }
 }
