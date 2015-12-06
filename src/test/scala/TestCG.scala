@@ -25,4 +25,14 @@ class TestCG extends TestBase {
         info(format_vec(solver.coef))
         info("# of iterations = " + solver.niter)
     }
+
+    test("Conjugate Gradient - Provided Initial Value") {
+        val updater = new SimpleUpdater(A)
+        val solver = new ConjugateGradient(updater, n)
+        solver.set_opts(n + 10)
+        solver.solve(b, sol * 0.99)
+        info("CG value = ")
+        info(format_vec(solver.coef))
+        info("# of iterations = " + solver.niter)
+    }
 }
