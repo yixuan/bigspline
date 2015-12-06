@@ -7,7 +7,7 @@ import scala.util.control._
 
 class BasicSpline(val dat_x: DenseMatrix[Double],
                   val dat_y: DenseVector[Double],
-                  val lambda: Double) {
+                  val lambda: Double) extends CGUpdater {
     private val dim_n = dat_x.rows
     private val dim_p = dat_x.cols
     private val dim_m = 1 + dim_p
@@ -60,7 +60,7 @@ class BasicSpline(val dat_x: DenseMatrix[Double],
     // Calculate (T'T + n * lambda * Qs) * x
     // Qs = [O  O]
     //    = [O  Q]
-    private def mat_prod(x: DenseVector[Double]): DenseVector[Double] = {
+    def mat_prod(x: DenseVector[Double]): DenseVector[Double] = {
         val x1 = x(0 until dim_m)
         val x2 = x(dim_m to -1)
         // Q * x2
@@ -75,4 +75,13 @@ class BasicSpline(val dat_x: DenseMatrix[Double],
         res(dim_m to -1) :+= (dim_n * lambda * Qx2)
         return res
     }
+
+    val solver = new ConjugateGradient(this, dim_m + dim_n)
+
+    def fit() {
+        solver.set_opts(eps = 0.001)
+        solver.solve(Tty)
+    }
+
+    def coef = solver.coef
 }
