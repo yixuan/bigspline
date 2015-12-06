@@ -17,8 +17,10 @@ class TestLogistic extends TestBase {
         info("True value = ")
         info(format_vec(sol))
 
-        val solver = new SimpleCG(A, b)
-        solver.solve(n + 10)
+        val updater = new SimpleUpdater(A)
+        val solver = new ConjugateGradient(updater, n)
+        solver.set_opts(n + 10)
+        solver.solve(b)
         info("CG value = ")
         info(format_vec(solver.coef))
         info("# of iterations = " + solver.niter)
