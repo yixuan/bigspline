@@ -32,10 +32,20 @@ class BasicSpline(val dat_x: DenseMatrix[Double],
         }
         return res.dot(weights)
     }
+
+    private def estimate_theta(): DenseVector[Double] = {
+        val theta = DenseVector.zeros[Double](dim_p)
+        for (i <- 0 until dim_p) {
+            theta(i) = 1.0 / sum(dat_x(::, i).map(x => Rkernel(x, x)))
+        }
+        return theta
+    }
+
+    val theta = estimate_theta()
+
     private def Rkernel(x: DenseVector[Double],
                         y: DenseVector[Double]): Double = {
-        val weights = DenseVector.ones[Double](x.length)
-        return Rkernel(x, y, weights)
+        return Rkernel(x, y, theta)
     }
 
     // S = (1, x1, x2, ..., x_p)
@@ -77,9 +87,16 @@ class BasicSpline(val dat_x: DenseMatrix[Double],
     }
 
     val solver = new ConjugateGradient(this, dim_m + dim_n)
+    var maxit = -1
+    var eps = 0.0
+
+    def set_opts(maxit: Int = -1, eps: Double = 1e-6) {
+        this.maxit = maxit
+        this.eps = eps
+        solver.set_opts(maxit, eps)
+    }
 
     def fit() {
-        solver.set_opts(eps = 0.001)
         solver.solve(Tty)
     }
 
