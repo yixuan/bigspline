@@ -22,9 +22,9 @@ class ConjugateGradient(val updater: CGUpdater, val ncoef: Int) {
         this.eps = eps
     }
 
-    def solve(vec_b: DenseVector[Double]) {
-        vec_x := DenseVector.zeros[Double](ncoef)
-        val vec_r: DenseVector[Double] = vec_b.copy
+    def solve(vec_b: DenseVector[Double], init_x: DenseVector[Double]) {
+        vec_x := init_x
+        val vec_r: DenseVector[Double] = vec_b - updater.mat_prod(vec_x)
         val vec_p: DenseVector[Double] = vec_r.copy
 
         var rsquare: Double = vec_r.dot(vec_r)
@@ -51,6 +51,10 @@ class ConjugateGradient(val updater: CGUpdater, val ncoef: Int) {
                 rsquare = rnorm * rnorm
             }
         }
+    }
+
+    def solve(vec_b: DenseVector[Double]) {
+        solve(vec_b, DenseVector.zeros[Double](ncoef))
     }
 
     def coef = vec_x.copy
