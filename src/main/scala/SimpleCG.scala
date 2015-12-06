@@ -6,7 +6,7 @@ import scala.util.control._
 
 
 class SimpleCG(val mat_A: DenseMatrix[Double], vec_b: DenseVector[Double])
-    extends ConjugateGradient(mat_A.rows, vec_b) {
+    extends ConjugateGradient(vec_b) {
 
     // Matrix-vector product to be implemented
     protected def mat_prod(x: DenseVector[Double]): DenseVector[Double] = {
