@@ -12,7 +12,16 @@ class TestBasicSpline extends TestBase {
     test("Basic Spline") {
         val mod = new BasicSpline(x, y)
         mod.set_opts(-1, 1e-3)
-        mod.fit(0.001)
+
+        val tune_res = mod.tune(1e-6, 1e-2)
+        info("Lambdas = ")
+        info(format_vec(tune_res._1))
+        info("V scores = ")
+        info(format_vec(tune_res._2))
+
+        val lambda = tune_res._1(argmin(tune_res._2))
+        mod.fit(lambda)
+        info("Selected lambda = " + lambda)
         info("Coefficients = ")
         info(format_vec(mod.coef))
         info("Predicted values = ")
