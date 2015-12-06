@@ -4,7 +4,7 @@ import org.scalatest.FunSuite
 import breeze.linalg._
 import breeze.numerics._
 
-class TestLogistic extends TestBase {
+class TestCG extends TestBase {
 
     val n = 20
     val mat = DenseMatrix.rand(n, n)
