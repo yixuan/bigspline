@@ -5,6 +5,7 @@ import breeze.numerics._
 import scala.util.control._
 import scala.util.Random
 
+// Store some static methods
 object BasicSpline {
     // Bernoulli polynomials
     def k1(x: Double) = x - 0.5

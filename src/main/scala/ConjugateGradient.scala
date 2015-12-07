@@ -4,10 +4,12 @@ import breeze.linalg._
 import breeze.numerics._
 import scala.util.control._
 
+// A provider should implement the x => A * x operation
 trait CGUpdater {
     def mat_prod(x: DenseVector[Double]): DenseVector[Double]
 }
 
+// Solving linear equation A * x = b using conjugate gradient method
 class ConjugateGradient(val updater: CGUpdater, val ncoef: Int) {
 
     private def square(x: Double): Double = x * x
@@ -22,6 +24,7 @@ class ConjugateGradient(val updater: CGUpdater, val ncoef: Int) {
         this.eps = eps
     }
 
+    // Solving the linear system with a provided initial guess of x
     def solve(vec_b: DenseVector[Double], init_x: DenseVector[Double]) {
         vec_x := init_x
         val vec_r: DenseVector[Double] = vec_b - updater.mat_prod(vec_x)
@@ -53,10 +56,13 @@ class ConjugateGradient(val updater: CGUpdater, val ncoef: Int) {
         }
     }
 
+    // Using zeros as the initial guess
     def solve(vec_b: DenseVector[Double]) {
         solve(vec_b, DenseVector.zeros[Double](ncoef))
     }
 
+    // Solved x
     def coef = vec_x.copy
+    // Number of iterations
     def niter = iter
 }
