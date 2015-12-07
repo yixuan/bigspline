@@ -103,8 +103,10 @@ class BasicSpline(val dat_x: DenseMatrix[Double],
         val res = DenseVector.zeros[Double](dim_m + dim_n)
         res(0 until dim_m) := S.t * Tx
         res(dim_m to -1) := Q * Tx
-        // T' * T * x + n * lambda * Q * x
+        // T' * T * x + n * lambda * Qs * x
         res(dim_m to -1) :+= (dim_n * lambda * Qx2)
+        // Add a small value to diagonal to make the matrix positive definite
+        res :+= (1e-6 * x)
         return res
     }
 
