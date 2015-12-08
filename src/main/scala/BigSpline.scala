@@ -5,6 +5,8 @@ import org.apache.spark.SparkContext._
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
 import org.apache.spark.broadcast.Broadcast
+import org.apache.log4j.Logger
+import org.apache.log4j.Level
 import breeze.linalg._
 import breeze.numerics._
 import scala.util.control._
@@ -50,6 +52,9 @@ object BigSpline {
         val conf = new SparkConf().setAppName("Big Spline")
         val sc = new SparkContext(conf)
 
+        Logger.getLogger("org").setLevel(Level.WARN);
+        Logger.getLogger("akka").setLevel(Level.WARN);
+
         val f = "file:///home/qyx/dat.txt"
         val txt = sc.textFile(f, 5)
 
@@ -64,19 +69,19 @@ object BigSpline {
         model.set_opts(-1, 1e-3)
 
         val tune_res = model.tune(1e-6, 1e-2)
-        println("Lambdas = ")
+        println("\nLambdas = ")
         println(format_vec(tune_res._1))
-        println("V scores = ")
+        println("\nV scores = ")
         println(format_vec(tune_res._2))
         val lambda = tune_res._1(argmin(tune_res._2))
-        println("Selected lambda = " + lambda)
+        println("\nSelected lambda = " + lambda)
 
         model.fit(lambda)
-        println("Coefficients = ")
+        println("\nCoefficients = ")
         println(format_vec(model.coef))
-        println("Predicted values = ")
+        println("\nPredicted values = ")
         println(format_vec(model.pred))
-        println("# of iterations = " + model.niter)
+        println("\n# of iterations = " + model.niter)
     }
 }
 
