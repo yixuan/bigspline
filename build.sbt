@@ -2,10 +2,10 @@ lazy val root = (project in file(".")).
   settings(
     name := "bigspline",
     version := "1.0",
-    scalaVersion := "2.11.7",
+    scalaVersion := "2.10.6",
     libraryDependencies ++= Seq(
       // Testing facility
-      "org.scalatest" % "scalatest_2.11" % "2.2.4" % "test",
+      "org.scalatest" % "scalatest_2.10" % "2.2.4" % "test",
       // Spark core components
       "org.apache.spark" %% "spark-core" % "1.5.2" % "provided",
       // Matrix operations using Breeze
