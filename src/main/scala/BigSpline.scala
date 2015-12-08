@@ -1,6 +1,8 @@
 package statr.stat695ss
 
 import org.apache.spark.SparkContext
+import org.apache.spark.SparkContext._
+import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
 import org.apache.spark.broadcast.Broadcast
 import breeze.linalg._
@@ -36,6 +38,45 @@ object BigSpline {
         val step = (logmax - logmin) / (nlambda - 1.0)
         val lambda = (0 until nlambda).map(i => math.exp(logmax - i * step)).toArray
         return lambda
+    }
+
+    // Nicely print vectors
+    private def format_vec(v: DenseVector[Double]): String = {
+        return "vec[" + v.data.map(x => "%.5f".format(x)).mkString(", ") + "]"
+    }
+
+    // Main program
+    def main(args: Array[String]) {
+        val conf = new SparkConf().setAppName("Big Spline")
+        val sc = new SparkContext(conf)
+
+        val f = "file:///home/qyx/dat.txt"
+        val txt = sc.textFile(f, 5)
+
+        val daty = txt.map(line => line.split(' ')(0).toDouble)
+        val datx = txt.map(line => DenseVector(line.split(' ').drop(1).map(_.toDouble)))
+
+        daty.cache()
+        datx.cache()
+
+        val model = new BigSpline(datx, daty, sc)
+
+        model.set_opts(-1, 1e-3)
+
+        val tune_res = model.tune(1e-6, 1e-2)
+        println("Lambdas = ")
+        println(format_vec(tune_res._1))
+        println("V scores = ")
+        println(format_vec(tune_res._2))
+        val lambda = tune_res._1(argmin(tune_res._2))
+        println("Selected lambda = " + lambda)
+
+        model.fit(lambda)
+        println("Coefficients = ")
+        println(format_vec(model.coef))
+        println("Predicted values = ")
+        println(format_vec(model.pred))
+        println("# of iterations = " + model.niter)
     }
 }
 
