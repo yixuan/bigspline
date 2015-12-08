@@ -10,7 +10,7 @@ trait CGUpdater {
 }
 
 // Solving linear equation A * x = b using conjugate gradient method
-class ConjugateGradient(val updater: CGUpdater, val ncoef: Int) {
+class ConjugateGradient(val updater: CGUpdater, val ncoef: Int) extends Serializable {
 
     private def square(x: Double): Double = x * x
 
