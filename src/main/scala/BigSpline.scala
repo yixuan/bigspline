@@ -11,6 +11,7 @@ import breeze.linalg._
 import breeze.numerics._
 import scala.util.control._
 import scala.util.Random
+import java.io.File
 
 // Store some static methods
 object BigSpline {
@@ -48,7 +49,7 @@ object BigSpline {
     }
 
     // Main program
-    // spark-submit --class statr.stat695ss.BigSpline --master local[4] bigspline_2.10-1.0.jar
+    // spark-submit --class statr.stat695ss.BigSpline --master local[4] bigspline_2.10-1.0.jar dat.txt 5
     def main(args: Array[String]) {
         val conf = new SparkConf().setAppName("Big Spline")
         val sc = new SparkContext(conf)
@@ -56,8 +57,13 @@ object BigSpline {
         Logger.getLogger("org").setLevel(Level.WARN);
         Logger.getLogger("akka").setLevel(Level.WARN);
 
-        val f = "file:///home/qyx/dat.txt"
-        val txt = sc.textFile(f, 5)
+        /* val f = "file:///home/qyx/dat.txt"
+        val txt = sc.textFile(f, 5) */
+        val f = new File(args(0))
+        var path = ""
+        if(f.exists())
+            path = "file://" + f.getAbsolutePath()
+        val txt = sc.textFile(path, args(1).toInt)
 
         val daty = txt.map(line => line.split(' ')(0).toDouble)
         val datx = txt.map(line => DenseVector(line.split(' ').drop(1).map(_.toDouble)))
@@ -66,24 +72,33 @@ object BigSpline {
         datx.cache()
 
         println("\nBuilding model...")
+        var t1 = System.currentTimeMillis()
         val model = new BigSpline(datx, daty, sc, true)
+        var t2 = System.currentTimeMillis()
+        println("Building model: " + (t2 - t1) / 1000.0 + "s")
 
         model.set_opts(-1, 1e-3)
 
-        val tune_res = model.tune(1e-6, 1e-2)
+        t1 = System.currentTimeMillis()
+        val tune_res = model.tune(1e-7, 1e-3)
         println("\nLambdas = ")
         println(format_vec(tune_res._1))
         println("\nV scores = ")
         println(format_vec(tune_res._2))
         val lambda = tune_res._1(argmin(tune_res._2))
         println("\nSelected lambda = " + lambda)
+        t2 = System.currentTimeMillis()
+        println("Tuning lambdas: " + (t2 - t1) / 1000.0 + "s")
 
+        t1 = System.currentTimeMillis()
         model.fit(lambda)
-        println("\nCoefficients = ")
-        println(format_vec(model.coef))
+        // println("\nCoefficients = ")
+        // println(format_vec(model.coef))
         println("\nPredicted values = ")
         println(format_vec(model.pred))
         println("\n# of iterations = " + model.niter)
+        t2 = System.currentTimeMillis()
+        println("Fitting model: " + (t2 - t1) / 1000.0 + "s")
     }
 }
 
@@ -210,6 +225,7 @@ class BigSpline(val dat_x: RDD[DenseVector[Double]],
             vscore(i) = res._1
             last_sol := res._2
             if(logs)  println("===> v score = " + vscore(i))
+            if(logs)  println("===> # iter = " + solver.niter)
         }
 
         return (DenseVector(lambdas), vscore)
