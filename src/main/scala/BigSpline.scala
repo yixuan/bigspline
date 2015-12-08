@@ -41,14 +41,15 @@ object BigSpline {
 
 class BigSpline(val dat_x: RDD[DenseVector[Double]],
                 val dat_y: RDD[Double],
-                @transient val sc: SparkContext) extends CGUpdater with Serializable {
+                @transient val sc: SparkContext,
+                val cache_Q: Boolean = false) extends CGUpdater with Serializable {
     // Trigger static block
     BigSpline
 
     // Collected data
-    val xc = dat_x.collect
-    val yc = DenseVector(dat_y.collect)
-    val broad_x = sc.broadcast(xc)
+    private val xc = dat_x.collect
+    private val yc = DenseVector(dat_y.collect)
+    private val broad_x = sc.broadcast(xc)
 
     // Dimensions
     private val dim_n = xc.size
@@ -65,10 +66,10 @@ class BigSpline(val dat_x: RDD[DenseVector[Double]],
     }
 
     // Estimated theta
-    val theta = estimate_theta()
+    private val theta = estimate_theta()
 
     // Penalty parameter
-    var lambda = 0.0
+    private var lambda = 0.0
 
     // Use the estimated theta to calculate kernel
     private def Rkernel(x: DenseVector[Double], y: DenseVector[Double]): Double = {
@@ -80,7 +81,9 @@ class BigSpline(val dat_x: RDD[DenseVector[Double]],
 
     // Q_ij = R(x_i, x_j), x_i is the i-th row of x
     private val Q = dat_x.map(xi => DenseVector(broad_x.value.map(xj => Rkernel(xi, xj))))
+    if(cache_Q)  Q.cache()
 
+    // Q * v
     private def mat_prod(A: RDD[DenseVector[Double]], x: DenseVector[Double]): DenseVector[Double] = {
         return DenseVector(A.map(a => a.dot(x)).collect)
     }
@@ -113,9 +116,9 @@ class BigSpline(val dat_x: RDD[DenseVector[Double]],
         return res
     }
 
-    val solver = new ConjugateGradient(this, dim_m + dim_n)
-    var maxit = -1
-    var eps = 1e-6
+    private val solver = new ConjugateGradient(this, dim_m + dim_n)
+    private var maxit = -1
+    private var eps = 1e-6
 
     def set_opts(maxit: Int = -1, eps: Double = 1e-6) {
         this.maxit = maxit

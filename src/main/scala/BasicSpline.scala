@@ -60,10 +60,10 @@ class BasicSpline(val dat_x: DenseMatrix[Double],
     }
 
     // Estimated theta
-    val theta = estimate_theta()
+    private val theta = estimate_theta()
 
     // Penalty parameter
-    var lambda = 0.0
+    private var lambda = 0.0
 
     // Use the estimated theta to calculate kernel
     private def Rkernel(x: DenseVector[Double], y: DenseVector[Double]): Double = {
@@ -110,9 +110,9 @@ class BasicSpline(val dat_x: DenseMatrix[Double],
         return res
     }
 
-    val solver = new ConjugateGradient(this, dim_m + dim_n)
-    var maxit = -1
-    var eps = 1e-6
+    private val solver = new ConjugateGradient(this, dim_m + dim_n)
+    private var maxit = -1
+    private var eps = 1e-6
 
     def set_opts(maxit: Int = -1, eps: Double = 1e-6) {
         this.maxit = maxit
