@@ -48,6 +48,7 @@ object BigSpline {
     }
 
     // Main program
+    // spark-submit --class statr.stat695ss.BigSpline --master local[4] bigspline_2.10-1.0.jar
     def main(args: Array[String]) {
         val conf = new SparkConf().setAppName("Big Spline")
         val sc = new SparkContext(conf)
@@ -64,7 +65,8 @@ object BigSpline {
         daty.cache()
         datx.cache()
 
-        val model = new BigSpline(datx, daty, sc)
+        println("\nBuilding model...")
+        val model = new BigSpline(datx, daty, sc, true)
 
         model.set_opts(-1, 1e-3)
 
@@ -165,10 +167,12 @@ class BigSpline(val dat_x: RDD[DenseVector[Double]],
     private val solver = new ConjugateGradient(this, dim_m + dim_n)
     private var maxit = -1
     private var eps = 1e-6
+    private var logs = true
 
-    def set_opts(maxit: Int = -1, eps: Double = 1e-6) {
+    def set_opts(maxit: Int = -1, eps: Double = 1e-6, logs: Boolean = true) {
         this.maxit = maxit
         this.eps = eps
+        this.logs = logs
         solver.set_opts(maxit, eps)
     }
 
@@ -199,10 +203,13 @@ class BigSpline(val dat_x: RDD[DenseVector[Double]],
         // Cache the result from previous lambda
         val last_sol = DenseVector.zeros[Double](dim_m + dim_n)
 
+        if(logs)  println("\nTuning lambdas...")
         for (i <- 0 until nlambda) {
+            if(logs)  println("\n===> lambda = " + lambdas(i))
             val res = Vscore(lambdas(i), w, Ttw, last_sol)
             vscore(i) = res._1
             last_sol := res._2
+            if(logs)  println("===> v score = " + vscore(i))
         }
 
         return (DenseVector(lambdas), vscore)
