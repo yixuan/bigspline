@@ -221,11 +221,16 @@ class BigSpline(val dat_x: RDD[DenseVector[Double]],
         if(logs)  println("\nTuning lambdas...")
         for (i <- 0 until nlambda) {
             if(logs)  println("\n===> lambda = " + lambdas(i))
+            val t1 = System.currentTimeMillis()
             val res = Vscore(lambdas(i), w, Ttw, last_sol)
+            val t2 = System.currentTimeMillis()
             vscore(i) = res._1
             last_sol := res._2
-            if(logs)  println("===> v score = " + vscore(i))
-            if(logs)  println("===> # iter = " + solver.niter)
+            if(logs) {
+                println("===> v score = " + vscore(i))
+                println("===> # iter = " + solver.niter)
+                println("===> used " + (t2 - t1) / 1000.0 + "s")
+            }
         }
 
         return (DenseVector(lambdas), vscore)
